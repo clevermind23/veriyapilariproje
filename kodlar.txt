@@ -1,0 +1,360 @@
+#include "stdafx.h"
+#include<iostream>
+#include<string.h>
+#include<string>
+#include<fstream>
+#include<ctime>
+#include <chrono>
+#include <windows.h>
+typedef std::chrono::high_resolution_clock Clock;
+using namespace std;
+
+
+
+class Program {
+
+private:
+	string girilenKelime;
+	string aktarici;
+	string secim;
+	float saniye;
+	float harfBasinaDusenYuzde;
+	float benzemeOrani = 0; 
+	float enBenzemeOrani = 0;
+	float tersBenzemeOrani = 0;//benzememe oranını sadece aynı uzunluktak kelimeler için yuzde belirlemede kullanıldı
+	string  enBenzer, okunanVeri, kontrolStringi = "Sorgulama";
+	int dosyaKontrol = 1, uzunlukFarki;
+
+public:
+	struct agac
+	{
+		string eklenenKelime;
+		agac* sag;
+		agac* sol;
+	};
+	struct liste
+	{
+		string eklenenKelime;
+		liste* next;
+	};
+
+
+	liste* listeyeVeriEkle(liste *r, string eklenecekKelime)
+	{
+		liste* k = r;//ilk deger degismesini engelliyor
+		if (r == NULL)//ilk veriyi atıyor
+		{
+			r = new liste;
+			r->eklenenKelime = eklenecekKelime;
+			r->next = NULL;
+			return r;
+		}
+		while (r->next != NULL && r->eklenenKelime != eklenecekKelime)//kelimeler ayni ise listeye eklemiyoruz
+		{
+			r = r->next;
+		}
+		if (r->next == NULL)//null olana kadar gelmisse benzer kelime yoktur
+		{
+			if (r->eklenenKelime != eklenecekKelime)
+			{
+				r->next = new liste;
+				r->next->eklenenKelime = eklenecekKelime;
+				r->next->next = NULL;
+				return k;
+			}
+			else
+				return k;
+		}
+		else
+			return k;
+
+	}
+
+
+	agac* agacaVeriEkle(agac* Agac, string eklenecekKelime)
+	{
+		if (Agac == NULL)
+		{
+			Agac = new agac;
+			Agac->eklenenKelime = eklenecekKelime;
+			Agac->sag = NULL;
+			Agac->sol = NULL;
+			return Agac;
+		}
+		if (eklenecekKelime[0] < Agac->eklenenKelime[0])
+		{
+			Agac->sol = agacaVeriEkle(Agac->sol, eklenecekKelime);
+			return Agac;
+		}
+		else
+		{
+			Agac->sag = agacaVeriEkle(Agac->sag, eklenecekKelime);
+			return Agac;
+		}
+	}
+
+	string kucukHarfeCevir(string kelime)
+	{
+		string a;
+		for (int i = 0; i < kelime.length(); i++)
+		{
+			if (kelime[i] < 91 && kelime[i]>64) //Burada büyük harf var ise küçük harfe çevirdik..
+			{
+				kelime[i] += 32;
+			}
+
+			if (kelime[i] > 96 && kelime[i] < 123) //burada ise harf harici bir karakter girilmişse onu yok saydık..
+			{
+				a = a + kelime[i];
+			}
+		}
+		return a;
+	}
+
+	agac* kokuOlustur(agac* Agac)
+	{
+		Agac->eklenenKelime = "llllll";
+		Agac->sag = NULL;
+		Agac->sol = NULL;
+		return Agac;
+	}
+	agac* aramaYap(agac* Agac, string arananKelime)
+	{
+		liste *Liste = NULL;
+		ofstream benzeyenDosya("60lik.txt"),yedekDosya;
+		ifstream okunacakDosya;
+
+	burayagit:
+		switch (dosyaKontrol)
+		{
+		case 1:okunacakDosya.open("txtFile.txt");
+			break;
+		case 2:okunacakDosya.open("htmlFile.html");
+			break;
+		case 3:okunacakDosya.open("pdfFile.pdf");
+			break;
+		case 4:okunacakDosya.open("xmlFile.xml");
+			break;
+		default:break;
+		}
+		while (!okunacakDosya.eof())
+		{
+			okunacakDosya >> okunanVeri;
+			okunanVeri = kucukHarfeCevir(okunanVeri);
+			if (okunanVeri.length() < 3)
+				continue;
+			if (okunanVeri.length() < arananKelime.length())//metindeki kelime kucukse calısır
+			{
+				harfBasinaDusenYuzde = 100 / arananKelime.length();//harf basina dusen yuzdeyi hesaplar
+				uzunlukFarki = arananKelime.length() - okunanVeri.length();//kelimeler arasindaki uzunluk farkini bulur
+				for (int i = 0; i < okunanVeri.length(); i++)
+				{
+					for (int j = i; j <= i + uzunlukFarki; j++)
+					{
+						if (okunanVeri[i] == arananKelime[j])
+						{
+							benzemeOrani += harfBasinaDusenYuzde;//harflar uyustugunda yuzdeyi arttirir
+							j = uzunlukFarki + i + 1;//harfler uyustugunda donguyu kirip diger haref gecer 
+						}
+					}
+				}
+			}
+			else if (okunanVeri.length() > arananKelime.length())//metindeki kelime buyukse calısır
+			{
+				harfBasinaDusenYuzde = 100 / okunanVeri.length();//harf basina dusen yuzdeyi hesaplar
+				uzunlukFarki = okunanVeri.length() - arananKelime.length();//kelimeler arasindaki uzunluk farkini bulur
+				for (int i = 0; i < arananKelime.length(); i++)
+				{
+
+					for (int j = i; j <= i + uzunlukFarki; j++)
+					{
+						if (okunanVeri[j] == arananKelime[i])
+						{
+							benzemeOrani += harfBasinaDusenYuzde;//harflar uyustugunda yuzdeyi arttirir
+							j = i + uzunlukFarki + 1;//harfler uyustugunda donguyu kirip diger harfe gecer 
+						}
+					}
+				}
+			}
+			else if (okunanVeri.length() == arananKelime.length())//metindeki kelimeler esitse calisir
+			{
+				harfBasinaDusenYuzde = 100 / okunanVeri.length();//harf basina düsen yüzdeyi bulur 
+				uzunlukFarki = okunanVeri.length() - arananKelime.length();//harfler arasindaki uzunluk farkini bulur 
+				for (int i = 0; i < arananKelime.length(); i++)
+				{
+					for (int j = i; j <= i + 1; j++)
+					{
+						if (okunanVeri[i] == arananKelime[j])
+						{
+							benzemeOrani += harfBasinaDusenYuzde;//eger harfler esitse yüzdeyi kelime basina dusen yuzde kadar arttirir
+							j = i + 2;//harfler uyustugunda donguyu kirip diger harfe gecer 
+						}
+					}
+				}
+				for (int i = 0; i < arananKelime.length(); i++)
+				{
+					for (int j = i; j <= i + 1; j++)
+					{
+						if (okunanVeri[j] == arananKelime[i])
+						{
+							tersBenzemeOrani += harfBasinaDusenYuzde;//eger harfler esitse yüzdeyi kelime basina dusen yuzde kadar arttirir
+							j = i + 2;//harfler uyustugunda donguyu kirip diger harfe gecer 
+						}
+					}
+				}
+				if (benzemeOrani < tersBenzemeOrani)//ayni kelime 2 farki bicimde farkli oranlar ciktigindan dolayi buyuk olanini secip islem yapilmasini saglar
+					benzemeOrani = tersBenzemeOrani;
+			}
+			if (benzemeOrani >= 60 && benzemeOrani < 100)//benzerlik orani 60 ve üstü ise txt ye atar 
+			{
+				benzeyenDosya << okunanVeri << endl;//kelime benzer ise txt ye atilir
+			}
+			if (okunanVeri[1] == arananKelime[1] && okunanVeri[2] == arananKelime[2])//agacin hafızasını azaltıp zamandan tasarruf etmek için kosul verildi 
+			{
+				agacaVeriEkle(Agac, okunanVeri);//agaca veriler eklenir
+			}
+			if (benzemeOrani > enBenzemeOrani)//en benzeme oranından büyükse en benzeyen yeni kelimeyi atar
+			{
+				enBenzemeOrani = benzemeOrani;
+				enBenzer = okunanVeri;//benzeme orani en fazla olan kelimeyi atar
+			}
+			benzemeOrani = 0;
+			tersBenzemeOrani = 0;
+		}
+
+		okunacakDosya.close();
+		dosyaKontrol++;
+		if (dosyaKontrol < 5)
+		{
+			goto burayagit;//4 dosya türünün de sıra sıra okunmasını saglar 
+		}
+		benzeyenDosya.close();
+	
+		benzeyenDosya.open("benzeyenler.txt");
+		benzeyenDosya << "Bunu mu demek istediniz ?" << endl << "->-> " << enBenzer << endl << endl << "Diger benzesmeler"<<endl<<endl;
+		okunacakDosya.open("60lik.txt");//en benzer kelimeyi benzerler adli dosyaya attiktan sonra diğer benzeyenleri 60 lık txt den cekip benzerlere atmayi saglar
+		okunanVeri.clear();
+		while (!okunacakDosya.eof())
+		{
+			okunacakDosya >> okunanVeri;
+			if (okunanVeri == enBenzer || okunanVeri == "")
+				continue;
+			Liste = listeyeVeriEkle(Liste, okunanVeri);		//yüzde 60 ın üstünde benzerlik oranina sahip tüm verileri listeye atip eleme yapiyor 
+			dosyaKontrol++;// dosya kontrol artmaz ise baska eslesme bulunmamis demektir
+		}
+	
+		while (Liste != NULL)
+		{
+			benzeyenDosya << "-> " << Liste->eklenenKelime << endl;//listeden cektigimiz verileri tek tek yaziyoruz
+			Liste = Liste->next;
+		}
+		if (dosyaKontrol == 5)//eger a =5 ise okunacak dosyaya basarili atama yapilmadigindan benzer kelime bulamadiğini belirtmek icin kullanildi
+			benzeyenDosya << "Bulunamadi";
+		
+		okunacakDosya.close();
+		benzeyenDosya.close();
+
+		return Agac;
+	}
+
+	agac* tamAramaYap(agac* Agac, string arananKelime)
+	{
+		ofstream dosya;
+		ifstream okunacakDosya;
+		if (Agac == NULL)
+		{
+			dosya.open("sonuclar.txt");
+			dosya << "####Tam Eslesme Yok####" << endl << endl;
+			okunacakDosya.open("benzeyenler.txt");
+			while (getline(okunacakDosya, aktarici))//satir satir cekip hepsini bir txt de topluyoruz
+			{
+				dosya << aktarici << endl;
+			}
+			okunacakDosya.close();
+			dosya.close();
+			return Agac;
+		}
+		if (arananKelime == Agac->eklenenKelime)
+		{
+			dosya.open("sonuclar.txt");
+			dosya << "####Tam Eslesen####" << endl << "->->" << Agac->eklenenKelime;
+			dosya.close();
+			return Agac;
+		}
+		if (arananKelime[0] < Agac->eklenenKelime[0])
+		{
+			Agac->sol = tamAramaYap(Agac->sol, arananKelime);
+			return Agac;
+		}
+		else
+		{
+			Agac->sag = tamAramaYap(Agac->sag, arananKelime);
+			return Agac;
+		}
+	}
+	void kelimeGir()
+	{
+		harfBasinaDusenYuzde = 0;
+		benzemeOrani = 0;
+		enBenzemeOrani = 0;
+		tersBenzemeOrani = 0;//benzememe oranını sadece aynı uzunluktak kelimeler için yuzde belirlemede kullanıldı
+		enBenzer = ""; 
+		okunanVeri = "";
+		kontrolStringi = "Sorgulama";
+		dosyaKontrol = 1;
+		uzunlukFarki = 0;
+		
+
+		cout << "Aranacak kelimeyi giriniz: ";
+		cin >> girilenKelime;
+		cout << endl << "Dosyalar araniyor..." << endl;
+
+		auto t1 = Clock::now(); //Zamanı başlattık.
+
+		agac* Agac = new agac;//agac olusturma
+		Agac = kokuOlustur(Agac);//agac atama 
+		aramaYap(Agac, girilenKelime);//asil islem yapilan bolge 
+		tamAramaYap(Agac, girilenKelime);//agaca attığımız veriler icinde tam uyusan var mı diye bakıyor 
+		auto t2 = Clock::now();
+		saniye = (chrono::duration_cast<chrono::milliseconds>(t2 - t1).count());
+		cout << endl <<endl<< "Islem " << saniye / 1000 << " saniyede tamamlandi.." << endl << endl;
+
+
+		system("sonuclar.txt");//ekrana sonucu yansitir
+
+		cout << endl << "Birazdan menuye yonlendirilecek.." << endl;
+		Sleep(2000);
+		system("CLS");
+		Menu();
+	}
+
+
+	void Menu()
+	{
+		cout << "Hangi islemi yapmak istersiniz?\n1-Kelime ara\n2-Cikis" << endl;
+		cin >> secim;
+		if (secim == "1")
+		{
+			kelimeGir();
+		}
+		else if (secim == "2")
+		{
+			exit;
+		}
+		else
+		{
+			cout << "Yanlis secim yaptiniz!" << endl;
+			Menu();
+		}
+
+	}
+};
+
+
+int main()
+{
+	Program nesne;
+	nesne.Menu();
+	system("pause");
+
+}

@@ -1,0 +1,30 @@
+Ağaçta tam eşleşen bulma kodu büyüme oranı: O(logn)
+Çünkü ağaçta her sorgulama yaptığımızda verilerin yarısını eliyoruz.
+
+Brute Force uygularsak tüm kelimelere tek tek bakacağı için daha uzun sürmektedir. Ağaç üzerinde yaptığımızda her sorgulamada bakacağı kelime sayısı yarıya düşer.
+
+
+## Ağaca ekleme işlemi ##
+
+1-Kelime dosyadan çekilir.
+2-Okunan kelime ile girilen kelimenin 2.ve 3. harfleri eşitse ağaca atama yapılır.
+3-Ağaca gönderilen kelimenin ilk harfi kökteki kelimenin ilk harfi ile karşılaştırılır.
+4-Kökteki ilk harften düşük ascii değerine denk geliyorsa sola gelmiyorsa sağa atanır.
+
+## Ağaca ekleme işlemi ##
+
+## Benzerlik Algoritması ##
+
+1-Kelime dosyadan çekilir
+2-Girilen kelime ile okunan kelime arasındaki uzunluk karşılaştırılıp farkı bir yerde tutulur.
+3-Kısa kelimenin sonuna kadar gidecek bir döngü açılır.
+4-Döngünün içinde o an bulunan indisten aradaki fark kadar fazla indise kadar kontrol edecek bir döngü oluşturulur.
+5-Eşleşen harf olduğunda benzeme oranı arttırılır.
+6-Harflerin yüzde kaçı uyuşmuş bulunur ona göre sonuç çıkarılır
+
+## Benzerlik Algoritması ##
+
+Benzerlik Algoritmasında okunan kelime ile girilen kelime arasındaki fark kadar indisleri arttırarak tekrar karşılaştırma yaptığımız için
+Levenshtein Algoritması diyebiliriz.
+
+Algoritma büyüme oranı O(n)
